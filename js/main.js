@@ -25,7 +25,7 @@ function gotMagnetoData(evt) {
     }
     //Push Data to Backend Service
     let request = new XMLHttpRequest();
-    request.open("POST", "http://localhost:8000/data", true);
+    request.open("POST", "https://api.pervasafe.de/data", true);
     request.setRequestHeader("Content-Type", "application/json");
     request.send(JSON.stringify({
                 "request_id": requesst_id,
@@ -231,7 +231,7 @@ function clearIt() {
 setInterval(() => {
   Plotly.update(heartpyMeasureDiv, {value: frameCnt}, {}, [0]);
   Plotly.update(heartpyMeasureDiv, {value: sampleCnt*10}, {}, [1])
-  fetch('http://localhost:8000/data/' + requesst_id).then(function(response) {
+  fetch('https://api.pervasafe.de/data/' + requesst_id).then(function(response) {
     return response.json();
   }).then(function(data) {
     console.log(data);
