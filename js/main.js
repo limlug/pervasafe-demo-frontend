@@ -13,6 +13,7 @@ var sampleCnt = 0, acceleroSampleCnt = 0, frameCnt = 0
 var xq = [], yq = [], zq = []
 var axq = [], ayq = [], azq = []
 var heartlog = [];
+var requesst_id = String(Math.floor(Math.random()*Date.now()))
 /// push the data to the temp arrays
 function gotMagnetoData(evt) {
     var raw = evt.target.value
@@ -23,6 +24,13 @@ function gotMagnetoData(evt) {
         heartlog.push([Date.now(), magData[ix]]);
     }
     //Push Data to Backend Service
+    let request = new XMLHttpRequest();
+    request.open("POST", "http://localhost:8000/data", true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(JSON.stringify({
+                "request_id": requesst_id,
+                "data": Array.from(magData),
+        }));
     //yq.push(magData[1])
     //zq.push(magData[2])
 
@@ -223,6 +231,17 @@ function clearIt() {
 setInterval(() => {
   Plotly.update(heartpyMeasureDiv, {value: frameCnt}, {}, [0]);
   Plotly.update(heartpyMeasureDiv, {value: sampleCnt*10}, {}, [1])
+  fetch('http://localhost:8000/data/' + requesst_id).then(function(response) {
+    return response.json();
+  }).then(function(data) {
+    console.log(data);
+    Plotly.update(heartpyMeasureDiv, {value: data.heartrate}, {}, [2]);
+    Plotly.update(heartpyMeasureDiv, {value: data.pnn20}, {}, [3]);
+    Plotly.update(heartpyMeasureDiv, {value: data.breathingrate}, {}, [4]);
+
+  }).catch(function() {
+    console.log("Booo");
+  });
   sampleCnt = 0;
   frameCnt = 0;
 }, 1000)
