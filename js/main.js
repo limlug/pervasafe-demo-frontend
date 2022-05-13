@@ -11,6 +11,7 @@ var device, server, service, magnetoCharacteristic, accelCharacteristic, battSer
 var sampleCnt = 0, acceleroSampleCnt = 0, frameCnt = 0
 /// x, y, z coordinates sent to Plotly at
 var xq = [], yq = [], zq = []
+var heart_rate_data = [], pnn20_data = [], breathingrate_data = []
 var axq = [], ayq = [], azq = []
 var heartlog = [];
 var requesst_id = String(Math.floor(Math.random()*Date.now()))
@@ -52,11 +53,37 @@ function step() {
         yq.length = 0;
         zq.length = 0;
     }
+    if (heart_rate_data.length) {
+        Plotly.extendTraces(
+            heartratePlotDiv,
+            {
+                y: [heart_rate_data],
+            },
+            [0], 100
+        );
+        heart_rate_data.length = 0;
+    }
+    if (pnn20_data.length) {
+        Plotly.extendTraces(
+            pnn20PlotDiv,
+            {
+                y: [pnn20_data],
+            },
+            [0], 100
+        );
+        pnn20_data.length = 0;
+    }
+    if (breathingrate_data.length) {
+        Plotly.extendTraces(
+            breathingPlotDiv,
+            {
+                y: [breathingrate_data],
+            },
+            [0], 100
+        );
+        breathingrate_data.length = 0;
+    }
     window.requestAnimationFrame(step)
-}
-
-function setSampleRate(rateInHz) {
-    magnetoCharacteristic && magnetoCharacteristic.writeValue && magnetoCharacteristic.writeValue(new Int8Array([rateInHz]))
 }
 
 function disconnect() {
@@ -166,7 +193,7 @@ function clearIt() {
       type: "indicator",
       mode: "gauge+number",
       gauge: {
-        axis: { range: [null, 100] },
+        axis: { range: [0, 100] },
         bar: { color: "black", thickness: 0.2 },
         steps: [
           { range: [0, 20], color: "green" },
@@ -178,14 +205,14 @@ function clearIt() {
       {height: 300,  margin: { t: 0, b: 0 } }
     );
     Plotly.newPlot(heartpyMeasureDiv, [
-      {
+ /*     {
         type: "indicator",
         mode: "number",
         value: 0,
         title: {
           text: "Frame Rate"
         },
-        domain: { x: [0, 0.5], y: [0, 0.2] },
+        domain: { x: [0, 0.4], y: [0, 0.2] },
       },
       {
         type: "indicator",
@@ -195,7 +222,7 @@ function clearIt() {
           text: "Sample Rate"
         },
         domain: { x: [0.5, 1], y: [0, 0.2] }
-      },
+      },*/
       {
         type: "indicator",
         mode: "number",
@@ -203,7 +230,7 @@ function clearIt() {
         title: {
           text: "Heart Rate"
         },
-        domain: { x: [0, 0.3], y: [0.5, 1] }
+        domain: { x: [0, 0.2], y: [0.5, 1] }
       },
       {
         type: "indicator",
@@ -212,7 +239,7 @@ function clearIt() {
         title: {
           text: "pNN 20"
         },
-        domain: { x: [0.3, 0.6], y: [0.5, 1] }
+        domain: { x: [0.3, 0.5], y: [0.5, 1] }
       },
       {
         type: "indicator",
@@ -221,23 +248,55 @@ function clearIt() {
         title: {
           text: "Breathing Rate"
         },
-        domain: { x: [0.6, 1], y: [0.5, 1] }
-      }
-    ], {height: 300, margin: { t: 25, r: 25, l: 25, b: 25 }}
+        domain: { x: [0.6, 0.9], y: [0.5, 1] }
+      },
+    ], {height: 150, margin: { t: 25, r: 25, l: 25, b: 25 }}
     );
+    Plotly.newPlot(heartratePlotDiv, [{
+        y: [],
+        type: 'scattergl',
+        mode: 'lines',
+        line: { color: '#f00' },
+        name: 'x'
+    },], {height: 150, width: 300,   xaxis: {range: [0, 100]}, margin: { t: 25, r: 25, l: 25, b: 25 }});
+    Plotly.newPlot(pnn20PlotDiv, [{
+        y: [],
+        type: 'scattergl',
+        mode: 'lines',
+        line: { color: '#f00' },
+        name: 'x'
+    },], {height: 150, width: 300,   xaxis: {range: [0, 100]}, margin: { t: 25, r: 25, l: 25, b: 25 }});
+        Plotly.newPlot(breathingPlotDiv, [{
+        y: [],
+        type: 'scattergl',
+        mode: 'lines',
+        line: { color: '#f00' },
+        name: 'x'
+    },], {height: 150, width: 300,   xaxis: {range: [0, 100]}, margin: { t: 25, r: 25, l: 25, b: 25 }});
 }
 
 // the actual initialization
 setInterval(() => {
-  Plotly.update(heartpyMeasureDiv, {value: frameCnt}, {}, [0]);
-  Plotly.update(heartpyMeasureDiv, {value: sampleCnt*10}, {}, [1])
+  //Plotly.update(heartpyMeasureDiv, {value: frameCnt}, {}, [0]);
+  //Plotly.update(heartpyMeasureDiv, {value: sampleCnt*10}, {}, [1])
   fetch('https://api.pervasafe.de/data/' + requesst_id).then(function(response) {
     return response.json();
   }).then(function(data) {
     console.log(data);
-    Plotly.update(heartpyMeasureDiv, {value: data.heartrate}, {}, [2]);
-    Plotly.update(heartpyMeasureDiv, {value: data.pnn20}, {}, [3]);
-    Plotly.update(heartpyMeasureDiv, {value: data.breathingrate}, {}, [4]);
+    Plotly.update(heartpyMeasureDiv, {value: data.heartrate}, {}, [0]);
+    heart_rate_data.push(data.heartrate);
+    Plotly.update(heartpyMeasureDiv, {value: data.pnn20}, {}, [1]);
+    pnn20_data.push(data.pnn20);
+    Plotly.update(heartpyMeasureDiv, {value: data.breathingrate}, {}, [2]);
+    breathingrate_data.push(data.breathingrate);
+    let stressindex = data.stressindex;
+    if (stressindex < 18){
+      stressindex = 18;
+    }
+    if (stressindex > 96){
+      stressindex = 96;
+    }
+    Plotly.update(stressGaugeDiv, {value: stressindex}, {}, [0]);
 
   }).catch(function() {
     console.log("Booo");
